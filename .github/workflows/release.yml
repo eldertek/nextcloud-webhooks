@@ -2,7 +2,7 @@ name: Build and publish app release
 
 on:
   release:
-      types: [published]
+    types: [published]
 
 env:
   APP_NAME: webhooks
@@ -12,28 +12,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           path: ${{ env.APP_NAME }}
-      - uses: actions/setup-node@v3
+      - uses: actions/setup-node@v4
         with:
-          node-version: 16
+          node-version: 20
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: 7.4
+          php-version: '8.2'
       - name: Run build
+        if: ${{ secrets.APP_PRIVATE_KEY != '' }}
         run: cd ${{ env.APP_NAME }} && make build && make appstore
-      - name: Upload app tarball to release
-        uses: svenstaro/upload-release-action@v2
-        id: attach_to_release
-        with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: ${{ env.APP_NAME }}/build/artifacts/appstore/${{ env.APP_NAME }}.tar.gz
-          asset_name: ${{ env.APP_NAME }}.tar.gz 
-          tag: ${{ github.ref }}
-          overwrite: true
       - name: Upload app to Nextcloud appstore
+        if: ${{ secrets.APPSTORE_TOKEN != '' && secrets.APP_PRIVATE_KEY != '' }}
         uses: R0Wi/nextcloud-appstore-push-action@v1
         with:
           app_name: ${{ env.APP_NAME }}

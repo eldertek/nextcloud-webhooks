@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * @copyright Copyright (c) 2021 Paweł Kuffel <pawel@kuffel.io>
  *
@@ -108,6 +110,9 @@ class Operation implements IOperation {
 					/** @var Node $node */
 					[$oldNode, $node] = $event->getSubject();
 					$eventDto['node'] = DtoExtractor::buildNodeDto($node);
+					if ($oldNode instanceof Node) {
+						$eventDto['oldNode'] = DtoExtractor::buildNodeDto($oldNode);
+					}
 				} elseif ($event instanceof GenericEvent || $event instanceof LegacyGenericEvent) {
 					/** @var Node $node */
 					$node = $event->getSubject();

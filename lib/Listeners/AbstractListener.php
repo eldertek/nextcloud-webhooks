@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * @copyright Copyright (c) 2021 Paweł Kuffel <pawel@kuffel.io>
  *
@@ -21,12 +23,13 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  *
  */
+
 namespace OCA\Webhooks\Listeners;
 
 use OCA\Webhooks\Utils\SignedRequest;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
-use \OCP\IConfig;
+use OCP\IConfig;
 
 /**
  * Class AbstractListener
@@ -45,8 +48,8 @@ abstract class AbstractListener implements IEventListener {
 	public function __construct(IConfig $config)
 	{
 		$this->config = $config;
-		$this->endpoint = $this->config->getSystemValue(static::CONFIG_NAME);
-		$this->secret = $this->config->getSystemValue("webhooks_secret");
+		$this->endpoint = (string)$this->config->getSystemValue(static::CONFIG_NAME, '');
+		$this->secret = (string)$this->config->getSystemValue("webhooks_secret", '');
 	}
 
 	public function handle(Event $event): void {
@@ -56,14 +59,13 @@ abstract class AbstractListener implements IEventListener {
 
 		$url = parse_url($this->endpoint);
 
-		if ($url['scheme'] !== "https" && $url['scheme'] !== "http") {
+		if (!isset($url['scheme']) || ($url['scheme'] !== "https" && $url['scheme'] !== "http")) {
 			return;
 		}
 
 		$dto = $this->handleIncomingEvent($event);
-		$dto['eventType'] = get_class($event);
-
-		if (!empty($dto)) {
+		if (!empty($dto) && is_array($dto)) {
+			$dto['eventType'] = get_class($event);
 			$this->sendDto($dto);
 		}
 	}

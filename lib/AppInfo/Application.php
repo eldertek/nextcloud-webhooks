@@ -30,6 +30,9 @@ use OCA\Webhooks\Listeners\CalendarObjectUpdatedListener;
 use OCA\Webhooks\Listeners\CalendarObjectDeletedListener;
 use OCA\Webhooks\Listeners\CalendarObjectMovedToTrashListener;
 use OCA\Webhooks\Listeners\CalendarObjectRestoredFromTrashListener;
+use OCA\Webhooks\Listeners\FileCreatedListener;
+use OCA\Webhooks\Listeners\FileUpdatedListener;
+use OCA\Webhooks\Listeners\FileDeletedListener;
 use OCA\Webhooks\Listeners\UserLiveStatusListener;
 use OCA\Webhooks\Listeners\LoginFailedListener;
 use OCA\Webhooks\Listeners\PasswordUpdatedListener;
@@ -47,6 +50,9 @@ use OCA\DAV\Events\CalendarObjectRestoredEvent;
 use OCA\DAV\Events\CalendarObjectUpdatedEvent;
 use OCA\Webhooks\Flow\RegisterFlowOperationsListener;
 use OCP\Authentication\Events\LoginFailedEvent; 
+use OCP\Files\Events\Node\NodeCreatedEvent;
+use OCP\Files\Events\Node\NodeWrittenEvent;
+use OCP\Files\Events\Node\NodeDeletedEvent;
 use OCP\Share\Events\ShareCreatedEvent;
 use OCP\User\Events\UserChangedEvent;
 use OCP\User\Events\UserCreatedEvent;
@@ -79,6 +85,9 @@ class Application extends App implements IBootstrap {
 		$context->registerEventListener(CalendarObjectDeletedEvent::class, CalendarObjectDeletedListener::class);
 		$context->registerEventListener(CalendarObjectMovedToTrashEvent::class, CalendarObjectMovedToTrashListener::class);
 		$context->registerEventListener(CalendarObjectRestoredEvent::class, CalendarObjectRestoredFromTrashListener::class);
+		$context->registerEventListener(NodeCreatedEvent::class, FileCreatedListener::class);
+		$context->registerEventListener(NodeWrittenEvent::class, FileUpdatedListener::class);
+		$context->registerEventListener(NodeDeletedEvent::class, FileDeletedListener::class);
 		$context->registerEventListener(LoginFailedEvent::class, LoginFailedListener::class);
 		$context->registerEventListener(PasswordUpdatedEvent::class, PasswordUpdatedListener::class);
 		$context->registerEventListener(ShareCreatedEvent::class, ShareCreatedListener::class);
@@ -101,6 +110,9 @@ class Application extends App implements IBootstrap {
 			"Calendar Object Deleted" => CalendarObjectDeletedListener::CONFIG_NAME,
 			"Calendar Object Moved to Trash" => CalendarObjectMovedToTrashListener::CONFIG_NAME,
 			"Calendar Object Restored from Trash" => CalendarObjectRestoredFromTrashListener::CONFIG_NAME,
+			"File Created" => FileCreatedListener::CONFIG_NAME,
+			"File Updated" => FileUpdatedListener::CONFIG_NAME,
+			"File Deleted" => FileDeletedListener::CONFIG_NAME,
 			"Login Failed" => LoginFailedListener::CONFIG_NAME,
 			"Password Updated" => PasswordUpdatedListener::CONFIG_NAME,
 			"Share Created" => ShareCreatedListener::CONFIG_NAME,

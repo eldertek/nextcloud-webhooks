@@ -8,21 +8,26 @@
     
 Outgoing webhooks can be triggered by either Nextcloud's internal events specified in config.php or by Flow actions defined in the admin UI.
 ]]></description>
-    <version>0.4.3</version>
-    <licence>agpl</licence>
-    <author mail="pawel@kuffel.io" >Paweł Kuffel</author>
+    <version>0.5.0</version>
+    <licence>AGPL-3.0-or-later</licence>
+    <author mail="pawel@kuffel.io">Paweł Kuffel</author>
+    <author>André Théo LAURET</author>
     <documentation>
-        <admin>https://github.com/kffl/nextcloud-webhooks#readme</admin>
+        <admin>https://github.com/eldertek/nextcloud-webhooks#readme</admin>
     </documentation>
     <namespace>Webhooks</namespace>
     <category>integration</category>
     <category>tools</category>
     <category>workflow</category>
-    <bugs>https://github.com/kffl/nextcloud-webhooks/issues</bugs>
-    <repository>https://github.com/kffl/nextcloud-webhooks</repository>
-	<screenshot>https://raw.githubusercontent.com/kffl/nextcloud-webhooks/master/screenshots/admin.png</screenshot>
+    <website>https://github.com/eldertek/nextcloud-webhooks</website>
+    <bugs>https://github.com/eldertek/nextcloud-webhooks/issues</bugs>
+    <repository>https://github.com/eldertek/nextcloud-webhooks</repository>
+    <donation>https://patreon.com/eldertek</donation>
+    <donation>https://github.com/sponsors/eldertek</donation>
+    <screenshot>https://raw.githubusercontent.com/eldertek/nextcloud-webhooks/master/screenshots/admin.png</screenshot>
     <dependencies>
-        <nextcloud min-version="25" max-version="30"/>
+        <php min-version="8.2" max-version="8.5"/>
+        <nextcloud min-version="28" max-version="35"/>
     </dependencies>
 
     <settings>

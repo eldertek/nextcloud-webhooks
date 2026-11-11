@@ -23,11 +23,11 @@ declare(strict_types=1);
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  *
  */
+
 namespace OCA\Webhooks\Settings;
 
 use OCP\AppFramework\Http\TemplateResponse;
 use OCP\IConfig;
-use OCP\IInitialStateService;
 use OCP\Settings\ISettings;
 use OCA\Webhooks\AppInfo\Application;
 
@@ -59,11 +59,11 @@ class Admin implements ISettings {
 			'admin',
 			[
 				'secret' => $this->config->getSystemValue('webhooks_secret'),
-				'canCurl' => Admin::testCurl(),
+				'canCurl' => true,
 				'activeEvents' => $activeEvents,
 				'inactiveEvents' => $inactiveEvents,
 			],
-			''
+			TemplateResponse::RENDER_AS_BLANK
 		);
 	}
 
@@ -76,10 +76,6 @@ class Admin implements ISettings {
 	}
 
 	public static function testCurl(): bool {
-		$output = null;
-		$retCode = null;
-		exec('curl --help', $output, $retCode);
-		return ($retCode == 0);
+		return true;
 	}
 }
-

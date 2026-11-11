@@ -23,20 +23,85 @@ declare(strict_types=1);
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  *
  */
+
 namespace OCA\Webhooks\Utils;
+
+use OCP\Http\Client\IClientService;
+use Psr\Log\LoggerInterface;
+use Throwable;
 
 class SignedRequest {
 
-	public static function sendSignedRequest(array $eventDto, $secret, $endpoint) {
-		$eventJSON = json_encode($eventDto);
-		$bodyHash = hash('sha256', $eventJSON . $secret);
-		$eventJSONescaped = escapeshellarg($eventJSON);
-		$endpointEscaped = escapeshellarg($endpoint);
+	public static function sendSignedRequest(array $eventDto, $secret, $endpoint): void {
+		$eventJSON = json_encode($eventDto, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+		if ($eventJSON === false) {
+			$eventJSON = json_encode($eventDto);
+		}
 
-		$curl  = "curl $endpointEscaped --header \"X-Nextcloud-Webhooks: $bodyHash\" ";
-		$curl .= "--header \"Content-Type: application/json\" --request POST ";
-		$curl .= "--data $eventJSONescaped  > /dev/null 2>&1 &";
+		$secretStr = is_string($secret) ? $secret : '';
+		$hmacSignature = hash_hmac('sha256', (string)$eventJSON, $secretStr);
+		$legacyHash = hash('sha256', (string)$eventJSON . $secretStr);
 
-		exec($curl);
+		/** @var LoggerInterface|null $logger */
+		$logger = null;
+		try {
+			if (class_exists('\\OC') && isset(\OC::$server)) {
+				$logger = \OC::$server->get(LoggerInterface::class);
+			}
+		} catch (Throwable $e) {
+			// ignore
+		}
+
+		try {
+			/** @var IClientService|null $clientService */
+			$clientService = null;
+			if (class_exists('\\OC') && isset(\OC::$server)) {
+				$clientService = \OC::$server->get(IClientService::class);
+			}
+
+			if ($clientService !== null) {
+				$client = $clientService->newClient();
+				$headers = [
+					'Content-Type' => 'application/json',
+					'X-Nextcloud-Webhooks' => $hmacSignature,
+					'X-Nextcloud-Webhooks-Signature' => 'sha256=' . $hmacSignature,
+					'X-Nextcloud-Webhooks-Legacy' => $legacyHash,
+				];
+
+				$response = $client->post((string)$endpoint, [
+					'headers' => $headers,
+					'body' => $eventJSON,
+					'timeout' => 10,
+					'connect_timeout' => 5,
+				]);
+
+				$status = $response->getStatusCode();
+				if ($status >= 200 && $status < 300) {
+					if ($logger !== null) {
+						$logger->debug("Webhook delivered to {$endpoint} (HTTP {$status})", ['app' => 'webhooks']);
+					}
+				} else {
+					if ($logger !== null) {
+						$logger->warning("Webhook delivery to {$endpoint} returned HTTP {$status}", ['app' => 'webhooks']);
+					}
+				}
+				return;
+			}
+		} catch (Throwable $e) {
+			if ($logger !== null) {
+				$logger->warning("Webhook delivery to {$endpoint} failed: " . $e->getMessage(), ['app' => 'webhooks']);
+			}
+		}
+
+		// Fallback to curl if clientService could not be executed
+		if (function_exists('exec')) {
+			$eventJSONescaped = escapeshellarg((string)$eventJSON);
+			$endpointEscaped = escapeshellarg((string)$endpoint);
+			$curl  = "curl $endpointEscaped --header \"X-Nextcloud-Webhooks: $hmacSignature\" ";
+			$curl .= "--header \"X-Nextcloud-Webhooks-Signature: sha256=$hmacSignature\" ";
+			$curl .= "--header \"Content-Type: application/json\" --request POST ";
+			$curl .= "--data $eventJSONescaped > /dev/null 2>&1 &";
+			@exec($curl);
+		}
 	}
 }
